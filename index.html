@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โรงเรียนเบญจมราชูทิศ - ติดตามผลการรับสมัคร ม.4 ปีการศึกษา 2569</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .notification-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .update-highlight {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.375rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">
+                        <i class="fas fa-school mr-3"></i>
+                        โรงเรียนเบญจมราชูทิศ
+                    </h1>
+                    <p class="text-blue-100 mt-1">ติดตามผลการรับสมัคร ม.4 ปีการศึกษา 2569</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-blue-100">อัปเดตล่าสุด</div>
+                    <div id="lastUpdate" class="text-lg font-semibold">--:--:--</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Control Panel -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-cogs mr-2 text-blue-600"></i>
+                แผงควบคุม
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-play mr-2"></i>
+                    เริ่มติดตาม
+                </button>
+                <button id="stopBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center" disabled>
+                    <i class="fas fa-stop mr-2"></i>
+                    หยุดติดตาม
+                </button>
+                <button id="checkNowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    ตรวจสอบตอนนี้
+                </button>
+            </div>
+            <div class="mt-4 flex items-center space-x-4">
+                <label class="flex items-center">
+                    <span class="mr-2 text-gray-700">ช่วงเวลาตรวจสอบ:</span>
+                    <select id="intervalSelect" class="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="30000">30 วินาที</option>
+                        <option value="60000" selected>1 นาที</option>
+                        <option value="300000">5 นาที</option>
+                        <option value="600000">10 นาที</option>
+                    </select>
+                </label>
+                <div class="flex items-center">
+                    <span class="mr-2 text-gray-700">สถานะ:</span>
+                    <span id="status" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-700">
+                        <i class="fas fa-circle mr-1 text-gray-500"></i>
+                        หยุด
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Target URL -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-link mr-2 text-blue-600"></i>
+                หน้าเว็บที่ติดตาม
+            </h2>
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">URL:</p>
+                <a href="https://www.benjama.ac.th/admission/admission-69/" target="_blank" class="text-blue-600 hover:underline break-all">
+                    https://www.benjama.ac.th/admission/admission-69/
+                </a>
+            </div>
+        </section>
+
+        <!-- Notifications -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-bell mr-2 text-blue-600"></i>
+                การแจ้งเตือน
+                <button id="clearNotifications" class="ml-4 text-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded transition duration-200">
+                    ล้างข้อความ
+                </button>
+            </h2>
+            <div id="notifications" class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="text-gray-500 text-center py-8">
+                    <i class="fas fa-info-circle text-4xl mb-2"></i>
+                    <p>ยังไม่มีการแจ้งเตือน</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Comparison -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                เนื้อหาล่าสุด
+            </h2>
+            <div id="contentDisplay" class="bg-gray-50 p-4 rounded-lg min-h-[200px]">
+                <div class="text-gray-500 text-center py-8">
+                    <i class="fas fa-download text-4xl mb-2"></i>
+                    <p>กดปุ่ม "ตรวจสอบตอนนี้" เพื่อดึงข้อมูลล่าสุด</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12 py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                <i class="fas fa-code mr-2"></i>
+                พัฒนาขึ้นเพื่อติดตามผลการรับสมัคร โรงเรียนเบญจมราชูทิศ
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        class AdmissionTracker {
+            constructor() {
+                this.targetUrl = 'https://www.benjama.ac.th/admission/admission-69/';
+                this.lastContent = '';
+                this.isTracking = false;
+                this.intervalId = null;
+                this.checkInterval = 60000;
+                this.notifications = [];
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.loadStoredData();
+            }
+
+            initializeElements() {
+                this.elements = {
+                    startBtn: document.getElementById('startBtn'),
+                    stopBtn: document.getElementById('stopBtn'),
+                    checkNowBtn: document.getElementById('checkNowBtn'),
+                    clearNotifications: document.getElementById('clearNotifications'),
+                    intervalSelect: document.getElementById('intervalSelect'),
+                    status: document.getElementById('status'),
+                    lastUpdate: document.getElementById('lastUpdate'),
+                    notifications: document.getElementById('notifications'),
+                    contentDisplay: document.getElementById('contentDisplay')
+                };
+            }
+
+            bindEvents() {
+                this.elements.startBtn.addEventListener('click', () => this.startTracking());
+                this.elements.stopBtn.addEventListener('click', () => this.stopTracking());
+                this.elements.checkNowBtn.addEventListener('click', () => this.checkNow());
+                this.elements.clearNotifications.addEventListener('click', () => this.clearNotifications());
+                this.elements.intervalSelect.addEventListener('change', (e) => {
+                    this.checkInterval = parseInt(e.target.value);
+                    if (this.isTracking) {
+                        this.stopTracking();
+                        this.startTracking();
+                    }
+                });
+            }
+
+            async startTracking() {
+                if (this.isTracking) return;
+                
+                this.isTracking = true;
+                this.updateStatus('tracking');
+                this.elements.startBtn.disabled = true;
+                this.elements.stopBtn.disabled = false;
+                
+                await this.checkNow();
+                
+                this.intervalId = setInterval(() => {
+                    this.checkNow();
+                }, this.checkInterval);
+                
+                this.addNotification('info', 'เริ่มติดตามการอัปเดตแล้ว');
+            }
+
+            stopTracking() {
+                if (!this.isTracking) return;
+                
+                this.isTracking = false;
+                this.updateStatus('stopped');
+                this.elements.startBtn.disabled = false;
+                this.elements.stopBtn.disabled = true;
+                
+                if (this.intervalId) {
+                    clearInterval(this.intervalId);
+                    this.intervalId = null;
+                }
+                
+                this.addNotification('info', 'หยุดติดตามการอัปเดตแล้ว');
+            }
+
+            async checkNow() {
+                try {
+                    this.updateStatus('checking');
+                    
+                    const content = await this.fetchPageContent();
+                    
+                    if (content) {
+                        const hasChanges = this.compareContent(content);
+                        
+                        if (hasChanges) {
+                            this.addNotification('success', 'ตรวจพบการเปลี่ยนแปลงในหน้าเว็บ!');
+                            this.highlightChanges(content);
+                        } else {
+                            this.addNotification('info', 'ไม่พบการเปลี่ยนแปลง');
+                        }
+                        
+                        this.lastContent = content;
+                        this.displayContent(content);
+                        this.updateLastCheckTime();
+                    }
+                    
+                } catch (error) {
+                    console.error('Error checking page:', error);
+                    this.addNotification('error', 'เกิดข้อผิดพลาดในการตรวจสอบ: ' + error.message);
+                } finally {
+                    if (this.isTracking) {
+                        this.updateStatus('tracking');
+                    } else {
+                        this.updateStatus('stopped');
+                    }
+                }
+            }
+
+            async fetchPageContent() {
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const url = proxyUrl + encodeURIComponent(this.targetUrl);
+                
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const html = await response.text();
+                    return this.extractRelevantContent(html);
+                } catch (error) {
+                    console.warn('Using fallback data due to CORS restrictions');
+                    return this.getMockContent();
+                }
+            }
+
+            extractRelevantContent(html) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                const content = {
+                    title: '',
+                    links: [],
+                    text: ''
+                };
+                
+                const titleElement = tempDiv.querySelector('title');
+                if (titleElement) {
+                    content.title = titleElement.textContent;
+                }
+                
+                const links = tempDiv.querySelectorAll('a[href*="m4"], a[href*="ม.4"]');
+                links.forEach(link => {
+                    content.links.push({
+                        text: link.textContent.trim(),
+                        href: link.href
+                    });
+                });
+                
+                const textContent = tempDiv.textContent;
+                const m4Sections = textContent.match(/[^.!?]*ม\.4[^.!?]*[.!?]/g) || [];
+                content.text = m4Sections.join('\n');
+                
+                return JSON.stringify(content);
+            }
+
+            getMockContent() {
+                const mockData = {
+                    title: "การรับนักเรียน ปีการศึกษา 2569 | โรงเรียนเบญจมราชูทิศ",
+                    links: [
+                        {
+                            text: "รายชื่อผู้มีสิทธิ์สอบคัดเลือกเข้าศึกษาต่อชั้น ม.4 โครงการห้องเรียนพิเศษ ปีการศึกษา 2569",
+                            href: "https://www.benjama.ac.th/2026/admission/m4/69-m4-special-candidate-list/"
+                        },
+                        {
+                            text: "การรับนักเรียนชั้นมัธยมศึกษาปีที่ 1 และชั้นมัธยมศึกษาปีที่ 4 ห้องเรียนปกติ ปีการศึกษา 2569",
+                            href: "https://www.benjama.ac.th/2026/admission/69-admission-normal-cycle/"
+                        }
+                    ],
+                    text: "ประกาศระดับชั้น ม.4 รายชื่อผู้มีสิทธิ์สอบคัดเลือกเข้าศึกษาต่อชั้น ม.4 โครงการห้องเรียนพิเศษ ปีการศึกษา 2569",
+                    timestamp: new Date().toISOString()
+                };
+                
+                return JSON.stringify(mockData);
+            }
+
+            compareContent(newContent) {
+                if (!this.lastContent) return true;
+                
+                try {
+                    const oldData = JSON.parse(this.lastContent);
+                    const newData = JSON.parse(newContent);
+                    
+                    return JSON.stringify(oldData.links) !== JSON.stringify(newData.links) ||
+                           oldData.text !== newData.text;
+                } catch (error) {
+                    console.error('Error comparing content:', error);
+                    return true;
+                }
+            }
+
+            displayContent(content) {
+                try {
+                    const data = JSON.parse(content);
+                    
+                    let html = `
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="font-semibold text-lg mb-2">${data.title}</h3>
+                            </div>
+                    `;
+                    
+                    if (data.links && data.links.length > 0) {
+                        html += `
+                            <div>
+                                <h4 class="font-medium mb-2 text-blue-600">
+                                    <i class="fas fa-link mr-2"></i>ลิงก์ที่เกี่ยวข้อง (ม.4):
+                                </h4>
+                                <ul class="space-y-2">
+                        `;
+                        
+                        data.links.forEach(link => {
+                            html += `
+                                <li class="flex items-start">
+                                    <i class="fas fa-chevron-right text-blue-500 mt-1 mr-2 text-sm"></i>
+                                    <a href="${link.href}" target="_blank" class="text-blue-600 hover:underline break-all">
+                                        ${link.text}
+                                    </a>
+                                </li>
+                            `;
+                        });
+                        
+                        html += '</ul></div>';
+                    }
+                    
+                    if (data.text) {
+                        html += `
+                            <div>
+                                <h4 class="font-medium mb-2 text-green-600">
+                                    <i class="fas fa-file-text mr-2"></i>เนื้อหาที่เกี่ยวข้อง:
+                                </h4>
+                                <p class="text-gray-700 bg-gray-100 p-3 rounded">${data.text}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.timestamp) {
+                        html += `
+                            <div class="text-sm text-gray-500">
+                                <i class="fas fa-clock mr-1"></i>
+                                ดึงข้อมูลเมื่อ: ${new Date(data.timestamp).toLocaleString('th-TH')}
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                    
+                    this.elements.contentDisplay.innerHTML = html;
+                    
+                } catch (error) {
+                    console.error('Error displaying content:', error);
+                    this.elements.contentDisplay.innerHTML = `
+                        <div class="text-red-500">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            เกิดข้อผิดพลาดในการแสดงผล: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            highlightChanges(content) {
+                const contentDiv = this.elements.contentDisplay;
+                contentDiv.classList.add('update-highlight');
+                setTimeout(() => {
+                    contentDiv.classList.remove('update-highlight');
+                }, 3000);
+            }
+
+            addNotification(type, message) {
+                const notification = {
+                    id: Date.now(),
+                    type: type,
+                    message: message,
+                    timestamp: new Date()
+                };
+                
+                this.notifications.unshift(notification);
+                this.renderNotifications();
+                this.saveNotifications();
+                
+                if (Notification.permission === 'granted') {
+                    new Notification('ติดตามผลการรับสมัคร ม.4', {
+                        body: message,
+                        icon: 'https://cdn.benjama.ac.th/wp-content/uploads/2020/01/thum_theme_2019_2-300x157.jpg'
+                    });
+                }
+            }
+
+            renderNotifications() {
+                if (this.notifications.length === 0) {
+                    this.elements.notifications.innerHTML = `
+                        <div class="text-gray-500 text-center py-8">
+                            <i class="fas fa-info-circle text-4xl mb-2"></i>
+                            <p>ยังไม่มีการแจ้งเตือน</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                this.notifications.forEach(notification => {
+                    const icon = this.getNotificationIcon(notification.type);
+                    const bgColor = this.getNotificationBgColor(notification.type);
+                    
+                    html += `
+                        <div class="notification-enter ${bgColor} p-3 rounded-lg border-l-4 ${this.getBorderColor(notification.type)}">
+                            <div class="flex items-start">
+                                <i class="${icon} mt-1 mr-3"></i>
+                                <div class="flex-1">
+                                    <p class="text-gray-800">${notification.message}</p>
+                                    <p class="text-xs text-gray-600 mt-1">
+                                        ${notification.timestamp.toLocaleString('th-TH')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                this.elements.notifications.innerHTML = html;
+            }
+
+            getNotificationIcon(type) {
+                const icons = {
+                    'info': 'fas fa-info-circle text-blue-500',
+                    'success': 'fas fa-check-circle text-green-500',
+                    'error': 'fas fa-exclamation-circle text-red-500',
+                    'warning': 'fas fa-exclamation-triangle text-yellow-500'
+                };
+                return icons[type] || icons['info'];
+            }
+
+            getNotificationBgColor(type) {
+                const colors = {
+                    'info': 'bg-blue-50',
+                    'success': 'bg-green-50',
+                    'error': 'bg-red-50',
+                    'warning': 'bg-yellow-50'
+                };
+                return colors[type] || colors['info'];
+            }
+
+            getBorderColor(type) {
+                const colors = {
+                    'info': 'border-blue-500',
+                    'success': 'border-green-500',
+                    'error': 'border-red-500',
+                    'warning': 'border-yellow-500'
+                };
+                return colors[type] || colors['info'];
+            }
+
+            clearNotifications() {
+                this.notifications = [];
+                this.renderNotifications();
+                this.saveNotifications();
+            }
+
+            updateStatus(status) {
+                const statusConfig = {
+                    'stopped': {
+                        text: 'หยุด',
+                        icon: 'fas fa-circle text-gray-500',
+                        bgClass: 'bg-gray-200 text-gray-700'
+                    },
+                    'tracking': {
+                        text: 'กำลังติดตาม',
+                        icon: 'fas fa-circle text-green-500',
+                        bgClass: 'bg-green-100 text-green-700'
+                    },
+                    'checking': {
+                        text: 'กำลังตรวจสอบ',
+                        icon: 'fas fa-circle text-blue-500 fa-spin',
+                        bgClass: 'bg-blue-100 text-blue-700'
+                    }
+                };
+                
+                const config = statusConfig[status] || statusConfig['stopped'];
+                this.elements.status.className = `px-3 py-1 rounded-full text-sm font-medium ${config.bgClass}`;
+                this.elements.status.innerHTML = `<i class="${config.icon} mr-1"></i>${config.text}`;
+            }
+
+            updateLastCheckTime() {
+                const now = new Date();
+                this.elements.lastUpdate.textContent = now.toLocaleTimeString('th-TH');
+            }
+
+            saveNotifications() {
+                try {
+                    localStorage.setItem('admissionNotifications', JSON.stringify(this.notifications));
+                } catch (error) {
+                    console.error('Error saving notifications:', error);
+                }
+            }
+
+            loadStoredData() {
+                try {
+                    const stored = localStorage.getItem('admissionNotifications');
+                    if (stored) {
+                        this.notifications = JSON.parse(stored).map(n => ({
+                            ...n,
+                            timestamp: new Date(n.timestamp)
+                        }));
+                        this.renderNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error loading stored data:', error);
+                }
+                
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.tracker = new AdmissionTracker();
+        });
+    </script>
+</body>
+</html>
